@@ -1,0 +1,110 @@
+version: '3.7'
+
+services:
+
+# Workspace Container
+    workspace:
+      container_name: ms_workspace
+      build:
+        context: ./env/docker/workspace
+        args:
+          - PHP_VERSION=${PHP_VERSION}
+          - PHP_XDEBUG_ENABLE=${PHP_XDEBUG_ENABLE}
+          - PHP_XDEBUG_VERSION=${PHP_XDEBUG_VERSION}
+          - PHP_XDEBUG_REMOTE_CONNECT_BACK=${PHP_XDEBUG_REMOTE_CONNECT_BACK}
+          - COMPOSER_PROCESS_TIMEOUT=${COMPOSER_PROCESS_TIMEOUT}
+      volumes:
+        - ../data/ms-api:/var/www:cached
+        - ~/.ssh:/home/laradock/.ssh
+        - ~/.gitconfig:/home/laradock/.gitconfig
+        - ~/.config/composer:/home/laradock/.config/composer
+        - ~/.aws:/home/laradock/.aws
+      tty: true
+      networks:
+        - ms_network
+
+# PHP-FPM
+    php-fpm:
+      container_name: ms_php_fpm
+      build:
+        context: ./env/docker/php-fpm
+        args:
+          - PHP_VERSION=${PHP_VERSION}
+          - PHP_XDEBUG_ENABLE=${PHP_XDEBUG_ENABLE}
+          - PHP_XDEBUG_VERSION=${PHP_XDEBUG_VERSION}
+          - PHP_XDEBUG_REMOTE_CONNECT_BACK=${PHP_XDEBUG_REMOTE_CONNECT_BACK}
+      volumes:
+        - ../data/ms-api:/var/www:cached
+      depends_on:
+        - workspace
+      networks:
+        - ms_network
+
+# NGINX
+    nginx:
+      container_name: ms_nginx_api
+      build:
+        context: ./env/docker/nginx
+      volumes:
+        - ../data/ms-api:/var/www:cached
+        - ${NGINX_HOST_LOG_PATH}:/var/log/nginx
+      depends_on:
+        - php-fpm
+        - mysqldb
+      environment:
+        - HTTPS_METHOD=${HTTPS_METHOD}
+      ports:
+        - 80:80
+      networks:
+        - ms_network
+
+# NGINX-FRONT
+    nginx-front:
+      container_name: ms_nginx_front
+      build:
+        context: ./env/docker/nginx-front
+      volumes:
+        - ../data/ms-front:/var/www:cached
+        - ${NGINX_FRONT_HOST_LOG_PATH}:/var/log/nginx
+      environment:
+        - HTTPS_METHOD=${HTTPS_METHOD}
+      ports:
+        - 8080:8080
+      networks:
+        - ms_network
+
+# MYSQL       
+    mysqldb:
+      image: mysql:${MYSQL_VERSION}
+      container_name: ${MYSQL_HOST}
+      restart: always
+      env_file:
+          - ".env"
+      volumes:
+        - ${DATA_PATH_HOST}mysql:/var/lib/mysql
+      environment:
+          - MYSQL_DATABASE=${MYSQL_DATABASE}
+          - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+          - MYSQL_USER=${MYSQL_USER}
+          - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      ports:
+          - "8989:3306"
+      networks:
+        - ms_network
+# Redis
+    redis:
+      container_name: your_project_redis
+      image: "redis"
+      hostname: your_project_redis
+      networks:
+        - ms_network
+
+# Volumes configuration
+volumes:
+  mysqldb:
+    driver: "local"
+
+# Network configuration
+networks:
+  ms_network:
+    name: ms_network
