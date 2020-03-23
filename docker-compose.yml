@@ -14,11 +14,22 @@ services:
           - PHP_XDEBUG_REMOTE_CONNECT_BACK=${PHP_XDEBUG_REMOTE_CONNECT_BACK}
           - COMPOSER_PROCESS_TIMEOUT=${COMPOSER_PROCESS_TIMEOUT}
       volumes:
-        - ../data/ms-api:/var/www:cached
+        - ../data/ms-api:/var/www/api:cached
         - ~/.ssh:/home/laradock/.ssh
         - ~/.gitconfig:/home/laradock/.gitconfig
         - ~/.config/composer:/home/laradock/.config/composer
         - ~/.aws:/home/laradock/.aws
+      tty: true
+      networks:
+        - ms_network
+
+# Workspace Container
+    workspace-front:
+      container_name: ms_workspace_front
+      build:
+        context: ./env/docker/workspace-front
+      volumes:
+        - ../data/ms-front:/var/www/front:cached
       tty: true
       networks:
         - ms_network
@@ -34,7 +45,7 @@ services:
           - PHP_XDEBUG_VERSION=${PHP_XDEBUG_VERSION}
           - PHP_XDEBUG_REMOTE_CONNECT_BACK=${PHP_XDEBUG_REMOTE_CONNECT_BACK}
       volumes:
-        - ../data/ms-api:/var/www:cached
+        - ../data/ms-api:/var/www/api:cached
       depends_on:
         - workspace
       networks:
@@ -46,7 +57,7 @@ services:
       build:
         context: ./env/docker/nginx
       volumes:
-        - ../data/ms-api:/var/www:cached
+        - ../data/ms-api:/var/www/api:cached
         - ${NGINX_HOST_LOG_PATH}:/var/log/nginx
       depends_on:
         - php-fpm
@@ -64,7 +75,7 @@ services:
       build:
         context: ./env/docker/nginx-front
       volumes:
-        - ../data/ms-front:/var/www:cached
+        - ../data/ms-front:/var/www/front:cached
         - ${NGINX_FRONT_HOST_LOG_PATH}:/var/log/nginx
       environment:
         - HTTPS_METHOD=${HTTPS_METHOD}
