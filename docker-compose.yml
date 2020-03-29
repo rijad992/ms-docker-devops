@@ -65,7 +65,7 @@ services:
       environment:
         - HTTPS_METHOD=${HTTPS_METHOD}
       ports:
-        - 80:80
+        - 8080:8080
       networks:
         - ms_network
 
@@ -80,7 +80,7 @@ services:
       environment:
         - HTTPS_METHOD=${HTTPS_METHOD}
       ports:
-        - 8080:8080
+        - 80:80
       networks:
         - ms_network
 

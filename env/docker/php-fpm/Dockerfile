@@ -23,7 +23,7 @@ RUN docker-php-ext-install json && \
     docker-php-ext-install xml && \
     docker-php-ext-install ctype && \
     docker-php-ext-install tokenizer && \
-    docker-php-ext-install pdo_pgsql && \
+    docker-php-ext-install pdo_mysql && \
     docker-php-ext-install opcache && \
     docker-php-ext-install zip && \
     docker-php-ext-configure intl && docker-php-ext-install intl && \
